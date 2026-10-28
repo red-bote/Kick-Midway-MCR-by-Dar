@@ -1,6 +1,6 @@
 --- a/vhdl_kick_rev_0_2_2019_11_22/rtl_dar/kick_de10_lite.vhd
 +++ b/vhdl_kick_rev_0_2_2019_11_22/basys3/kick_basys3.srcs/sources_1/new/kick_basys3.vhd
-@@ -1,17 +1,17 @@
+@@ -1,55 +1,53 @@
  ---------------------------------------------------------------------------------
 --- DE10_lite Top level for Kick (Midway MCR) by Dar (darfpga@aol.fr) (19/10/2019)
 --- http://darfpga.blogspot.fr
@@ -22,11 +22,15 @@
 --- Don't forget to set device configuration mode with memory initialization
 ---  (Assignments/Device/Pin options/Configuration mode)
 ----------------------------------------------------------------------------------
- --
- -- release rev 02 : fix move_buf for 15kHz
- --  (22/11/2019)
-@@ -23,33 +23,40 @@
- --
+---
+--- release rev 02 : fix move_buf for 15kHz
+---  (22/11/2019)
+---
+--- release rev 01 : add TV 15kHz mode
+---  (21/11/2019)    use merged sprite 8bits roms (make it easier to externalize)
+---
+--- release rev 00 : initial release
+---
  --
  -- Main features :
 ---  PS2 keyboard input @gpio pins 35/34 (beware voltage translation/protection)
@@ -41,10 +45,10 @@
  --  Sound         : OK
  --
 --- For hardware schematic see my other project : NES
+---
+--- Uses 1 pll 40MHz from 50MHz to make 20MHz and 8Mhz
 +-- Uses 1 MMCM (clk_wiz_0) for 40MHz from 100MHz
  --
---- Uses 1 pll 40MHz from 50MHz to make 20MHz and 8Mhz
----
 --- Board key :
 ---   0 : reset game
 ---
@@ -85,7 +89,7 @@
  ---------------------------------------------------------------------------------
  
  library ieee;
-@@ -58,35 +65,16 @@
+@@ -58,35 +56,16 @@
  use ieee.numeric_std.all;
  
  library work;
@@ -129,7 +133,7 @@
  
    vga_r     : out std_logic_vector(3 downto 0);
    vga_g     : out std_logic_vector(3 downto 0);
-@@ -94,29 +82,23 @@
+@@ -94,29 +73,23 @@
    vga_hs    : out std_logic;
    vga_vs    : out std_logic;
  
@@ -168,7 +172,7 @@
    signal r         : std_logic_vector(3 downto 0);
    signal g         : std_logic_vector(3 downto 0);
    signal b         : std_logic_vector(3 downto 0);
-@@ -129,52 +111,63 @@
+@@ -129,52 +102,63 @@
    signal audio_l           : std_logic_vector(15 downto 0);
    signal audio_r           : std_logic_vector(15 downto 0);
    signal pwm_accumulator_l : std_logic_vector(17 downto 0);
@@ -260,7 +264,7 @@
    -- Kick
    kick : entity work.kick
    port map(
-@@ -190,21 +183,21 @@
+@@ -190,21 +174,21 @@
      video_hs     => hsync,
      video_vs     => vsync,
  
@@ -290,7 +294,7 @@
    );
  
    -- spin angle decoder simulation
-@@ -214,7 +207,7 @@
+@@ -214,7 +198,7 @@
        ctc_zc_to_2_r <= ctc_zc_to_2;
  
        if ctc_zc_to_2_r ='0' and ctc_zc_to_2 = '1' then
@@ -299,7 +303,7 @@
            if joy_BBBBFRLDU(2) = '1' then spin_count <= spin_count - 40; end if; -- left
            if joy_BBBBFRLDU(3) = '1' then spin_count <= spin_count + 40; end if; -- right
          else
-@@ -240,19 +233,15 @@
+@@ -240,19 +224,15 @@
    -- vga_vs <= vsync;
    vga_vs <= '1'   when tv15Khz_mode = '1' else vsync;
  
@@ -320,7 +324,7 @@
          else
            clock_div <= clock_div + '1';
          end if;
-@@ -260,125 +249,60 @@
+@@ -260,125 +240,60 @@
      end if;
    end process;
  
@@ -493,7 +497,7 @@
  
    -- pwm sound output
    process(clock_40)  -- use same clock as kick_sound_board
-@@ -387,14 +311,13 @@
+@@ -387,14 +302,13 @@
  
        if clock_div = "0000" then
          pwm_accumulator_l  <=  ('0'&pwm_accumulator_l(16 downto 0)) + ('0'&audio_l&'0');
